@@ -20,5 +20,6 @@ package net.pkhsolutions.irongrim.api;
  * that <em>changes the state of the system</em>. There is no technical difference between implementing this interface
  * and the generic {@link Message} interface. This interface is only intended to make the code easier to read.
  */
+@SuppressWarnings("unused")
 public interface Command<RESULT> extends Message<RESULT> {
 }

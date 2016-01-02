@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see AsyncMessageBroker
  */
+@SuppressWarnings("unused")
 public interface MessageBroker {
 
     /**

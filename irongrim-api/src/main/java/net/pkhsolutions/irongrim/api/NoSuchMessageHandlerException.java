@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Exception thrown when a {@link MessageHandler} can not be found for a specific {@link Message}.
  */
+@SuppressWarnings("unused")
 public class NoSuchMessageHandlerException extends RuntimeException {
 
     private final Class<? extends Message> messageClass;

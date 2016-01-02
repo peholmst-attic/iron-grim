@@ -26,6 +26,7 @@ import rx.Observable;
  * @see <a href="https://github.com/ReactiveX/RxJava">RxJava</a>
  * @see AsyncMessageHandler
  */
+@SuppressWarnings("unused")
 public interface AsyncMessageBroker extends MessageBroker {
 
     /**
