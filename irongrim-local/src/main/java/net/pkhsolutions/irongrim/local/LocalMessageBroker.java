@@ -35,20 +35,22 @@ import org.springframework.util.StopWatch;
  * Thread-safe implementation of {@link MessageBroker} that looks up the {@link MessageHandler}s from the Spring
  * application context. The handlers are cached, so the lookup is only done once for each message type.
  */
+@SuppressWarnings("unused")
 public class LocalMessageBroker implements MessageBroker {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalMessageBroker.class);
 
     private final ApplicationContext applicationContext;
-    private Map<Class<?>, MessageHandler> messageHandlerCache = new ConcurrentHashMap<>();
+    private final Map<Class<?>, MessageHandler> messageHandlerCache = new ConcurrentHashMap<>();
 
     /**
      * Creates a new {@code LocalMessageBroker}.
      * 
-     * @param applicationContext the Spring application context from which message handlers should be fetched.
+     * @param applicationContext the Spring application context from which message handlers should be fetched (never
+     *        {@code null}).
      */
     public LocalMessageBroker(@NotNull ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
+        this.applicationContext = Objects.requireNonNull(applicationContext);
     }
 
     @Override
@@ -72,7 +74,7 @@ public class LocalMessageBroker implements MessageBroker {
      * @param message the message that needs to be handled (never {@code null}).
      * @return the message handler if found, an empty {@code Optional} otherwise.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "WeakerAccess" })
     @NotNull
     protected <MESSAGE extends Message<REPLY>, REPLY> Optional<MessageHandler<MESSAGE, REPLY>> getHandler(
         @NotNull MESSAGE message) {

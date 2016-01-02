@@ -16,10 +16,15 @@
 package net.pkhsolutions.irongrim.local;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertSame;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import net.pkhsolutions.irongrim.api.AsyncMessageHandler;
 import net.pkhsolutions.irongrim.api.MessageHandler;
 import net.pkhsolutions.irongrim.api.NoSuchMessageHandlerException;
 
@@ -27,53 +32,56 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 
+import rx.Observable;
+
 /**
- * Unit test for {@link LocalMessageBroker}.
+ * Unit test for {@link LocalAsyncMessageBroker}.
  */
 @SuppressWarnings("unused")
-public class LocalMessageBrokerTest {
+public class LocalAsyncMessageBrokerTest {
 
     private ApplicationContext applicationContext;
-    private LocalMessageBroker localMessageBroker;
+    private LocalAsyncMessageBroker localAsyncMessageBroker;
     private MessageHandler<TestMessage, String> messageHandler;
+    private AsyncMessageHandler<TestMessage, String> asyncMessageHandler;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() {
         applicationContext = mock(ApplicationContext.class);
         messageHandler = mock(MessageHandler.class);
-        localMessageBroker = new LocalMessageBroker(applicationContext);
+        asyncMessageHandler = mock(AsyncMessageHandler.class);
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        localAsyncMessageBroker = new LocalAsyncMessageBroker(applicationContext, executorService);
     }
 
     @Test(expected = NoSuchMessageHandlerException.class)
-    public void send_noHandlersInApplicationContext_exceptionThrown() {
+    public void sendAsync_noHandlersInApplicationContext_exceptionThrown() {
         when(applicationContext.getBeansOfType(MessageHandler.class)).thenReturn(Collections.emptyMap());
-        localMessageBroker.send(new TestMessage());
+        localAsyncMessageBroker.sendAsync(new TestMessage());
     }
 
     @Test
-    public void send_handlerFoundAndMessageSentOnlyOnce_replyIsReturned() {
+    @SuppressWarnings("unchecked")
+    public void sendAsync_asyncHandlerFound_observableIsReturned() {
+        final TestMessage message = new TestMessage();
+        final Observable<String> result = mock(Observable.class);
+        when(asyncMessageHandler.supports(TestMessage.class)).thenReturn(true);
+        when(asyncMessageHandler.handleMessageAsync(message)).thenReturn(result);
+        when(applicationContext.getBeansOfType(MessageHandler.class))
+            .thenReturn(Collections.singletonMap("mockHandler", asyncMessageHandler));
+
+        assertSame(result, localAsyncMessageBroker.sendAsync(message));
+    }
+
+    @Test
+    public void sendAsync_normalHandlerFound_observableUsingExecutorServiceIsReturned() {
         final TestMessage message = new TestMessage();
         when(messageHandler.supports(TestMessage.class)).thenReturn(true);
         when(messageHandler.handleMessage(message)).thenReturn("hello");
         when(applicationContext.getBeansOfType(MessageHandler.class))
             .thenReturn(Collections.singletonMap("mockHandler", messageHandler));
 
-        assertEquals("hello", localMessageBroker.send(message));
-    }
-
-    @Test
-    public void send_handlerFoundAndMessageSentTwice_replyIsReturnedBothTimesAndHandlerIsFetchedFromCacheTheSecondTime() {
-        final TestMessage message = new TestMessage();
-        when(messageHandler.supports(TestMessage.class)).thenReturn(true);
-        when(messageHandler.handleMessage(message)).thenReturn("hello");
-        when(applicationContext.getBeansOfType(MessageHandler.class))
-            .thenReturn(Collections.singletonMap("mockHandler", messageHandler));
-
-        assertEquals("hello", localMessageBroker.send(message));
-        assertEquals("hello", localMessageBroker.send(message));
-
-        verify(messageHandler).supports(TestMessage.class);
-        verify(applicationContext).getBeansOfType(MessageHandler.class);
+        assertEquals("hello", localAsyncMessageBroker.sendAsync(message).toBlocking().single());
     }
 }
