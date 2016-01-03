@@ -24,7 +24,7 @@ import rx.Observable;
 /**
  * An extended version of the {@link MessageHandler} interface that also supports asynchronous message handling
  * by using {@link Observable}s from RxJava. Implementations can create the Observables themselves or use e.g. Hystrix
- * commands.
+ * commands. Implementations should remember to transfer the {@link Context} to any new threads they create.
  * 
  * @see <a href="https://github.com/ReactiveX/RxJava">RxJava</a>
  * @see AsyncMessageBroker

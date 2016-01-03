@@ -33,7 +33,8 @@ public interface AsyncMessageBroker extends MessageBroker {
      * Sends the specified message to its message handler using the observer pattern. If the message handler is
      * an instance of {@link AsyncMessageHandler}, {@link AsyncMessageHandler#handleMessageAsync(Message)} will be used.
      * Otherwise, the broker will take care of creating the observable and invoke
-     * {@link MessageHandler#handleMessage(Message)}.
+     * {@link MessageHandler#handleMessage(Message)}. In that case, the broker will transfer the {@link Context} to any
+     * new threads it creates.
      *
      * @param message the message to send (never {@code null}).
      * @return an observable that will handle the message once an observer subscribes to it (never {@code null}).

@@ -62,9 +62,15 @@ public class LocalAsyncMessageBroker extends LocalMessageBroker implements Async
         if (handler instanceof AsyncMessageHandler) {
             return ((AsyncMessageHandler) handler).handleMessageAsync(message);
         } else {
+            final Context context = ContextHolder.getContext();
             return Observable.create(subscriber -> executorService.submit(() -> {
-                subscriber.onNext(handler.handleMessage(message));
-                subscriber.onCompleted();
+                ContextHolder.setContext(context);
+                try {
+                    subscriber.onNext(handler.handleMessage(message));
+                    subscriber.onCompleted();
+                } finally {
+                    ContextHolder.resetContext();
+                }
             }));
         }
     }
